@@ -11,6 +11,7 @@ import HomeIcon from '@material-ui/icons/Home';
 import GitHubCircleIcon from 'mdi-material-ui/GithubCircle';
 
 import EmptyState from '../EmptyState';
+import EmployeeTable from '../EmployeeTable/EmployeeTable';
 
 const styles = (theme) => ({
   emptyStateIcon: {
@@ -36,10 +37,7 @@ class HomeContent extends Component {
 
     if (signedIn) {
       return (
-        <EmptyState
-          icon={<HomeIcon className={classes.emptyStateIcon} color="action" />}
-          title="Home"
-        />
+        <EmployeeTable />
       );
     }
 
