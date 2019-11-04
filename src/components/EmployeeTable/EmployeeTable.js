@@ -97,6 +97,7 @@ class EmployeeTable extends Component {
         .catch(function(error) {
             console.error("Error writing document: ", error);
         });
+        this.updateTotalCost(newEmployee.uid)
     }
 
     capitilizeName(name){
@@ -132,7 +133,6 @@ class EmployeeTable extends Component {
         .catch(function(error) {
             console.error("Error updating document: ", error);
         });
-        this.updateTotalCost(newEmployee.uid)
     }
 
     isDiscounted(firstName, cost) {
@@ -156,18 +156,23 @@ class EmployeeTable extends Component {
                             let employee = {};
                             let employeeCost = 0;
                             employeeSnapshot.forEach(doc => {
-                                if(doc.data().uid === employeeUid){
+                                if(doc.id === employeeUid){
                                     employeeCost = this.state.totalCost + doc.data().cost;
 
                                     this.setState({totalCost: employeeCost}, () => {
-                                        employee = {firstName: doc.data().firstName, lastName: doc.data().lastName, cost: doc.data().cost, uid: doc.data().uid};
+                                        employee = {firstName: doc.data().firstName, lastName: doc.data().lastName, cost: doc.data().cost};
                                         this.ref.doc(employeeUid).set({...employee, totalCost: this.state.totalCost});
+                                        this.updateMonthlyCost();
                                     });
                                 }
                             })
                         })
                 })
             })
+    }
+
+    updateMonthlyCost(){
+
     }
 
     render() {

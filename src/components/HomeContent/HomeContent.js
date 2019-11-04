@@ -4,12 +4,6 @@ import PropTypes from 'prop-types';
 
 import { withStyles } from '@material-ui/core/styles';
 
-import Fab from '@material-ui/core/Fab';
-
-import HomeIcon from '@material-ui/icons/Home';
-
-import GitHubCircleIcon from 'mdi-material-ui/GithubCircle';
-
 import EmptyState from '../EmptyState';
 import EmployeeTable from '../EmployeeTable/EmployeeTable';
 
@@ -29,8 +23,6 @@ const styles = (theme) => ({
 
 class HomeContent extends Component {
   render() {
-    // Styling
-    const { classes } = this.props;
 
     // Properties
     const { signedIn } = this.props;

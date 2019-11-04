@@ -3,6 +3,7 @@ import MaterialTable from 'material-table';
 
 import {auth, firestore} from '../../firebase';
 
+
 // Dependents Controller for Material-Table Component
 class DependentTable extends Component {
     constructor(props){
@@ -105,7 +106,11 @@ class DependentTable extends Component {
                 title="Dependents"
                 columns={this.state.columns}
                 data={this.state.data}
-
+                style={{
+                    width: '80%',
+                    position:'relative',
+                    left: '10%'   
+                }}
                 editable={{
                     // Create
                     onRowAdd: (newDependent) =>
