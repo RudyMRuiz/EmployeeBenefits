@@ -116,9 +116,13 @@ class EmployeeTable extends Component {
 
     // Patch
     patchEmployee(newEmployee){
+        const capitilizedFirstName = this.capitilizeName(newEmployee.firstName);
+        const capitilizedLastName = this.capitilizeName(newEmployee.lastName);
         const employeeCost = this.isDiscounted(newEmployee.firstName, 1000)
         newEmployee = {
             ...newEmployee,
+            firstName: capitilizedFirstName,
+            lastName: capitilizedLastName,
             cost: employeeCost
         }
         this.ref.doc(newEmployee.uid).set(newEmployee)
@@ -152,7 +156,6 @@ class EmployeeTable extends Component {
                             let employee = {};
                             let employeeCost = 0;
                             employeeSnapshot.forEach(doc => {
-                                console.log(doc.data())
                                 if(doc.data().uid === employeeUid){
                                     employeeCost = this.state.totalCost + doc.data().cost;
 

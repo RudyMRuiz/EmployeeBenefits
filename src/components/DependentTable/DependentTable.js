@@ -34,9 +34,13 @@ class DependentTable extends Component {
 
     // Create
     createDependent(newDependent){
+        const capitilizedFirstName = this.capitilizeName(newDependent.firstName);
+        const capitilizedLastName = this.capitilizeName(newDependent.lastName);
         const dependentCost = this.isDiscounted(newDependent.firstName, 500)
         newDependent = {
             ...newDependent,
+            firstName: capitilizedFirstName,
+            lastName: capitilizedLastName,
             cost: dependentCost
         }
         this.ref.doc().set(newDependent)
@@ -51,9 +55,13 @@ class DependentTable extends Component {
 
     // Patch
     patchDependent(dependentData){
+        const capitilizedFirstName = this.capitilizeName(dependentData.firstName);
+        const capitilizedLastName = this.capitilizeName(dependentData.lastName);
         const dependentCost = this.isDiscounted(dependentData.firstName, 500)
         dependentData = {
             ...dependentData,
+            firstName: capitilizedFirstName,
+            lastName: capitilizedLastName,
             cost: dependentCost
         }
         this.ref.doc(dependentData.uid).set(dependentData)
@@ -84,6 +92,10 @@ class DependentTable extends Component {
         }
         else 
             return cost
+    }
+
+    capitilizeName(name){
+        return name.charAt(0).toUpperCase() + name.slice(1);
     }
 
     render() {

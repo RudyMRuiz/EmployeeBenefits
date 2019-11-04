@@ -46,12 +46,7 @@ class HomeContent extends Component {
       <EmptyState
         title={process.env.REACT_APP_NAME}
         description="Please Sign Up or Log In to access the application"
-        button={
-          <Fab className={classes.button} color="secondary" href="https://github.com/Phoqe/react-material-ui-firebase" rel="noopener noreferrer" target="_blank" variant="extended">
-            <GitHubCircleIcon className={classes.buttonIcon} />
-            GitHub
-          </Fab>
-        }
+        
       />
     );
   }
