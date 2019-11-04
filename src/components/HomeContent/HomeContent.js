@@ -35,6 +35,7 @@ class HomeContent extends Component {
     // Properties
     const { signedIn } = this.props;
 
+    // If Signed In, load EmployeeTable Component
     if (signedIn) {
       return (
         <EmployeeTable />
@@ -44,7 +45,7 @@ class HomeContent extends Component {
     return (
       <EmptyState
         title={process.env.REACT_APP_NAME}
-        description="The three musketeers, all in one pack in the form of a boilerplate app"
+        description="Please Sign Up or Log In to access the application"
         button={
           <Fab className={classes.button} color="secondary" href="https://github.com/Phoqe/react-material-ui-firebase" rel="noopener noreferrer" target="_blank" variant="extended">
             <GitHubCircleIcon className={classes.buttonIcon} />

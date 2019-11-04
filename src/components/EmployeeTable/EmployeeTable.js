@@ -39,26 +39,32 @@ const tableIcons = {
     SortArrow: forwardRef((props, ref) => <ArrowUpward {...props} ref={ref} />),
     ThirdStateCheck: forwardRef((props, ref) => <Remove {...props} ref={ref} />),
     ViewColumn: forwardRef((props, ref) => <ViewColumn {...props} ref={ref} />)
-  };
+};
 
-  class EmployeeTable extends Component {
+// Employee controller for Material-Table Component
+class EmployeeTable extends Component {
     constructor(props) {
-      super(props);
+        super(props);
 
-      this.unsub = null;
-      this.ref = firestore.collection(`users/${auth.currentUser.uid}/Employees/`);
-      this.state = {
-        columns: [
-          { title: 'First Name', field: 'firstName' },
-          { title: 'Last Name', field: 'lastName' },
-          { title: 'Cost', field: 'cost', type: 'numeric', editable: 'never'},
-        ],
-        data: []
-      }
-
-      this.addEmployee = this.addEmployee.bind(this);
+        //this.totalCost = 0;
+        this.unsub = null;
+        this.ref = firestore.collection(`users/${auth.currentUser.uid}/Employees/`);
+        this.state = {
+            columns: [
+                { title: 'First Name', field: 'firstName' },
+                { title: 'Last Name', field: 'lastName' },
+                { title: 'Total Cost', field: 'totalCost', type: 'numeric', editable: 'never'},
+            ],
+            data: [],
+            totalCost: 0
+        }
+        
+        //As of ES6+ React no longer autobinds methods
+        this.createEmployee = this.createEmployee.bind(this);
+        this.updateTotalCost = this.updateTotalCost.bind(this);
     }
 
+    // Initialize component with DidMount lifecycle method
     componentDidMount(){
         this.unsubscribe = this.ref
             .onSnapshot(snapshot => {
@@ -67,18 +73,24 @@ const tableIcons = {
                     data.push({ ...doc.data(), uid: doc.id }),
                 );
                 this.setState({
-                    data,
+                    data
                 });
             });
     }
     
-    addEmployee(newData){
-        const employeeCost = this.isDiscounted(newData.firstName, 1000)
-        newData = {
-            ...newData,
-            cost: employeeCost
+    // Create
+    createEmployee(newEmployee){
+        const upperCaseFirstName = this.capitilizeName(newEmployee.firstName);
+        const upperCaseLastName = this.capitilizeName(newEmployee.lastName);
+        const employeeCost = this.isDiscounted(upperCaseFirstName, 1000)
+        newEmployee = {
+            ...newEmployee,
+            firstName: upperCaseFirstName,
+            lastName: upperCaseLastName,
+            cost: employeeCost,
+            totalCost: employeeCost
         }
-        this.ref.doc().set(newData)
+        this.ref.doc().set(newEmployee)
         .then(function() {
             console.log("Document successfully written!");
         })
@@ -87,8 +99,13 @@ const tableIcons = {
         });
     }
 
-    removeEmployee(uid){
-        this.ref.doc(uid).delete()
+    capitilizeName(name){
+        return name.charAt(0).toUpperCase() + name.slice(1);
+    }
+
+    // Delete
+    deleteEmployee(oldEmployeeUid){
+        this.ref.doc(oldEmployeeUid).delete()
         .then(() => {
             console.log("Document Deleted!")
         })
@@ -97,19 +114,21 @@ const tableIcons = {
         })
     }
 
-    updateEmployee(newData){
-        const employeeCost = this.isDiscounted(newData.firstName, 1000)
-        newData = {
-            ...newData,
+    // Patch
+    patchEmployee(newEmployee){
+        const employeeCost = this.isDiscounted(newEmployee.firstName, 1000)
+        newEmployee = {
+            ...newEmployee,
             cost: employeeCost
         }
-        this.ref.doc(newData.uid).set(newData)
+        this.ref.doc(newEmployee.uid).set(newEmployee)
         .then(function() {
             console.log("Document successfully updated!");
         })
         .catch(function(error) {
             console.error("Error updating document: ", error);
         });
+        this.updateTotalCost(newEmployee.uid)
     }
 
     isDiscounted(firstName, cost) {
@@ -119,86 +138,84 @@ const tableIcons = {
         else 
             return cost
     }
-  
-    handleDependentClick(uid){
-        this.unsubscribe = this.ref.doc(uid).collection("Dependents")
-            .onSnapshot(snapshot => {
-                let data = [];
-                snapshot.forEach(doc =>
-                    data.push({ ...doc.data(), uid: doc.id }),
-                );
-                this.setState({
-                    data,
+
+    updateTotalCost(employeeUid, cost, op){
+        this.ref.doc(employeeUid).collection("Dependents").get()
+            .then(dependentSnapshot => {
+                let dependentCosts = 0;
+                dependentSnapshot.forEach(doc => {
+                    dependentCosts += doc.data().cost
                 });
-            });
+                this.setState({totalCost: dependentCosts}, () => {
+                    this.ref.get()
+                        .then(employeeSnapshot => {
+                            let employee = {};
+                            let employeeCost = 0;
+                            employeeSnapshot.forEach(doc => {
+                                console.log(doc.data())
+                                if(doc.data().uid === employeeUid){
+                                    employeeCost = this.state.totalCost + doc.data().cost;
+
+                                    this.setState({totalCost: employeeCost}, () => {
+                                        employee = {firstName: doc.data().firstName, lastName: doc.data().lastName, cost: doc.data().cost, uid: doc.data().uid};
+                                        this.ref.doc(employeeUid).set({...employee, totalCost: this.state.totalCost});
+                                    });
+                                }
+                            })
+                        })
+                })
+            })
     }
 
     render() {
-      return (
-        console.log(),
-        <MaterialTable
-          icons={tableIcons}
-          title="Employees"
-          columns={this.state.columns}
-          data={this.state.data}
-          actions={[
-            {
-              icon: forwardRef((props, ref) => <ViewColumn {...props} ref={ref} />),
-              tooltip: 'Dependents',
-              //onClick: (event, rowData) => alert("You clicked " + this.ref.doc(rowData.uid))
-              onClick: (event, rowData) => this.handleDependentClick(rowData.uid)
-            },
-          ]}
-          onRowClick={(event, rowData, togglePanel) => togglePanel()}
-          detailPanel={rowData => {
-            return (
-              <DependentTable TableIcons={tableIcons} DependentUid={rowData.uid}/>
-            )
-          }}
-          editable={{
-            onRowAdd: (newData) =>
-              new Promise((resolve, reject) => {
-                setTimeout(() => {
-                  {
-                    const data = this.state.data;
-                    //data.push(newData);
-                    this.addEmployee(newData)
-                    this.setState({ data }, () => resolve());
-                  }
-                  resolve()
-                }, 1000)
-              }),
-            onRowUpdate: (newData, oldData) =>
-              new Promise((resolve, reject) => {
-                setTimeout(() => {
-                  {
-                    const data = this.state.data;
-                    const index = data.indexOf(oldData);
-                    //console.log("NEWDATA " + this.ref.doc().collection('Dependents') + newData.uid)
-                    this.updateEmployee(newData);
-                    //data[index] = newData;
-                    //this.setState({ data }, () => resolve());
-                  }
-                  resolve()
-                }, 1000)
-              }),
-            onRowDelete: oldData =>
-              new Promise((resolve, reject) => {
-                setTimeout(() => {
-                  {
-                    let data = this.state.data;
-                    const index = data.indexOf(oldData);
-                    this.removeEmployee(oldData.uid);
-                    //data.splice(index, 1);
-                    //this.setState({ data }, () => resolve());
-                  }
-                  resolve()
-                }, 1000)
-              }),
-          }}
-        />
-      )
-    }
-  }
+        return (
+            <MaterialTable
+            icons={tableIcons}
+            title="Employees"
+            columns={this.state.columns}
+            data={this.state.data}
+            
+            onRowClick={(event, rowData, togglePanel) => togglePanel()}
+            detailPanel={rowData => {
+                return (
+                <DependentTable tableIcons={tableIcons} employeeUid={rowData.uid} triggerUpdateCost={this.updateTotalCost}/>
+                )
+            }}
+            editable={{
+                // Create
+                onRowAdd: (newEmployee) =>
+                    new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        {
+                        const data = this.state.data;
+                        this.createEmployee(newEmployee)
+                        this.setState({ data }, () => resolve());
+                        }
+                        resolve()
+                    }, 1000)
+                }),
+                // Patch
+                onRowUpdate: (newEmployee, oldData) =>
+                    new Promise((resolve, reject) => {
+                        setTimeout(() => {
+                            this.patchEmployee(newEmployee);
 
-  export default EmployeeTable;
+                            resolve()
+                        }, 1000)
+                    }),
+                // Delete
+                onRowDelete: oldEmployee =>
+                    new Promise((resolve, reject) => {
+                        setTimeout(() => {
+                            this.deleteEmployee(oldEmployee.uid);
+
+                            resolve()
+                        }, 1000)
+                    }),
+            }}
+            />
+        )
+    }
+}
+
+export default EmployeeTable;
